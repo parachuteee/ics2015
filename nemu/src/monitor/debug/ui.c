@@ -39,6 +39,100 @@ static int cmd_q(char *args) {
 
 static int cmd_help(char *args);
 
+static int cmd_si(char *args) {
+	int i = 0, num = 0;
+	if (args == NULL)
+		cpu_exec(1);
+	else {
+		int len = strlen(args);
+		for (i = 0; i < len; ++ i)
+			num = (num * 10 + args[i] - '0');
+		if (num <= 0)
+			cpu_exec(1);
+	}
+	cpu_exec(num);
+	return 0;
+}
+
+
+static int cmd_info(char *args) {
+	int i;
+	if(strcmp(args, "r") == 0) {
+
+		for(i=0;i<8;i++){
+			printf("%s-%08x\n", regsl[i], reg_l(i));
+		}
+
+		for(i=0;i<8;i++){
+			printf("%s-%04x\n", regsw[j], reg_w(j));
+		}
+
+		for(i=0;i<8;i++){
+			printf("%s-%02x\n", regsb[k], reg_b(k));
+		}
+		printf("eip-%x\n", cpu.eip);		
+	}
+	else if( strcmp(args, "w") == 0 ){
+		WP* temp = head;
+		while(temp != NULL){
+			printf("%d, %s, %d\n", temp->NO, temp->addr, temp->old_value);
+			temp = temp->next;
+		}
+	}
+	else
+		printf("Something's wrong:-(\n");
+
+	return 0;
+}
+
+static int cmd_x(char *args);
+
+
+static int cmd_p(char *args) {
+	bool *flag = malloc(sizeof(bool));
+	uint32_t expression = expr(args, flag); 
+	//实现表达式求值即调用expr.c
+	if (*flag == true) printf("%s = 0x%x\n", args, expression);
+	else printf("Invalid!");
+	return 0;
+}
+
+static int cmd_w(char *args) {
+	int i = 0;
+	bool *flag = malloc(sizeof(bool));
+	WP *wp = new_wp();
+	if (args[0] != '*' && args[0] != '$') {
+		printf("Wrong input!\n");
+		return 0;
+	}
+	printf("Watchpoint No.%d: expr:%s\n", wp->NO, args);
+	while (args[i] != 0) {
+		wp->addr[i] = args[i];
+		++i;
+	}
+	wp->old_value = expr(wp->addr, flag);
+
+	return 0;
+}
+
+static int cmd_d(char *args) {
+
+	bool *flag = malloc(sizeof(bool));
+	int no = expr(args, flag);
+	WP* temp = head;
+	while(temp != NULL){
+		if(temp->NO == no){
+			free_wp(temp);
+			printf("Delete watchpoint NO:%d\n", temp->NO);
+			break;
+		}
+		temp = temp->next;
+	}
+	return 0;
+}
+
+static int cmd_bt(char *args);
+
 static struct {
 	char *name;
 	char *description;
@@ -47,8 +141,13 @@ static struct {
 	{ "help", "Display informations about all supported commands", cmd_help },
 	{ "c", "Continue the execution of the program", cmd_c },
 	{ "q", "Exit NEMU", cmd_q },
-
-	/* TODO: Add more commands */
+	{ "si","Single-step", cmd_si}, //单步执行
+	{ "info","Print status", cmd_info}, //打印程序状态
+	{ "p","Calculate the experssion", cmd_p}, //表达式求值 PA1-2
+	{ "x","Scan memory", cmd_x}, //扫描内存
+	{ "w","Add a watchpoint", cmd_w}, //设置监视 PA1-3
+	{ "d","Delete a watchpoint", cmd_d}, //删除监视 PA1-3
+	{ "bt","Print the stack", cmd_bt}, //打印栈帧链 PA2
 
 };
 
@@ -79,6 +178,8 @@ static int cmd_help(char *args) {
 
 void ui_mainloop() {
 	while(1) {
+		extern swaddr_t StackFrame[1000];
+		StackFrame[0] = 0;
 		char *str = rl_gets();
 		char *str_end = str + strlen(str);
 
