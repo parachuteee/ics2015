@@ -46,6 +46,7 @@ static struct rule {
 
 };
 
+#define NR_REGEX (sizeof(rules) / sizeof(rules[0]) )
 static regex_t re[NR_REGEX];
 
 /* Rules are used for many times.
