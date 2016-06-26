@@ -76,7 +76,7 @@ typedef struct token {
 Token tokens[32];
 int nr_token;
 
-int check_brackets(int, int);
+int check_parentheses(int, int);
 
 int Judge_op(int, int);
 
@@ -184,7 +184,7 @@ uint32_t expr(char *e, bool *flag) {
 
 
 
-int check_brackets(int s, int e) {
+int check_parentheses(int s, int e) {
 /* check if there are illegal brackets,
  * such like ")(", or "()", or "(...))", or "((...)"
  */
@@ -221,7 +221,7 @@ int Judge_op(int s, int e) {
 	while (i > s - 1) { 
 		if (tokens[i].type == ')') {
 			int j = i - 1; 
-			while (check_brackets(j, i) != 1) 
+			while (check_parentheses(j, i) != 1) 
 				-- j;
 			i = j;
 		}
@@ -235,7 +235,7 @@ int Judge_op(int s, int e) {
 	while (i > s - 1) {
 		if (tokens[i].type == ')') {
 			int j = i - 1; 
-			while (check_brackets(j, i) != 1) 
+			while (check_parentheses(j, i) != 1) 
 				-- j;
 			i = j;
 		}
@@ -249,7 +249,7 @@ int Judge_op(int s, int e) {
 	while (i > s - 1) {
 		if (tokens[i].type == ')') {
 			int j = i - 1; 
-			while (check_brackets(j, i) != 1) 
+			while (check_parentheses(j, i) != 1) 
 				-- j;
 			i = j;
 		}
@@ -263,7 +263,7 @@ int Judge_op(int s, int e) {
  	while (i > s - 1) {
 		if (tokens[i].type == ')') {
 			int j = i - 1; 
-			while (check_brackets(j, i) != 1) 
+			while (check_parentheses(j, i) != 1) 
 				-- j;
 			i = j;
  		}
@@ -277,7 +277,7 @@ int Judge_op(int s, int e) {
 	while (i > s - 1) {
 		if (tokens[i].type == ')') {
 			int j = i - 1; 
-			while (check_brackets(j, i) != 1) 
+			while (check_parentheses(j, i) != 1) 
 				-- j;
 			i = j;
 		}
@@ -292,7 +292,7 @@ int Judge_op(int s, int e) {
 	while (i > s - 1) {
 		if (tokens[i].type == ')') {
 			int j = i - 1; 
-			while (check_brackets(j, i) != 1) 
+			while (check_parentheses(j, i) != 1) 
 				-- j;
 			i = j;
 		}
@@ -385,7 +385,7 @@ uint32_t eval(int start, int end) {
 		return eval(start + 1, end);
 	}
 	else {
-		int check = check_brackets(start, end);
+		int check = check_parentheses(start, end);
 	 	if (check == 1) {
 			return eval(start + 1, end - 1); 
 		}
