@@ -29,7 +29,7 @@ static struct rule {
 	{" +",	NOTYPE},					// spaces
 	{"0x", HEX},						// hex
 	{"\\$", REG_NAME},					// reg name
-	{"[eE][abcdABCD][xX]|[eE][sbiSBI][pP]|[eE][sdSD][iI]|[ABCDabcd][xX]|[sbSB][pP]|[sdSD][iI]|[abcdABCD][lhLH]", REG},								//registers
+	{"[e][abcd][x]|[e][sbi][p]|[e][sd][i]|[abcd][x]|[sb][p]|[sd][i]|[abcd][lh]", REG},								//registers
 	{"[A-Za-z_][0-9A-Za-z_]+", OBJ},		// OBJ
 	{"[0-9A-Fa-f]+", DIGIT},			// digits
 	{"\\(", '('},						// left
@@ -45,8 +45,6 @@ static struct rule {
 	{"\\!", NOT},						// not
 
 };
-
-#define NR_REGEX (sizeof(rules) / sizeof(rules[0]) )
 
 static regex_t re[NR_REGEX];
 
@@ -181,8 +179,6 @@ uint32_t expr(char *e, bool *flag) {
 	*flag = true;
 	return eval(0, nr_token - 1);
 }
-
-
 
 int check_parentheses(int s, int e) {
 /* check if there are illegal brackets,
@@ -409,25 +405,23 @@ uint32_t eval(int start, int end) {
 						assert(0);
 					}
 				}
-				if (tokens[start].type == NOT)						// Judge '!'
+				if (tokens[start].type == NOT)					// '!'
 					return !eval(start + 1, end);
-				else if (tokens[start].type == '-')					// Judge minus number
-					return sign * eval(S, end);						// A minus number = sign * abs(number)
+				else if (tokens[start].type == '-')				// 负数
+					return sign * eval(S, end);
 				else if (tokens[start].type == '*')
-					return swaddr_read(eval(start + 1, end), 4);	// Judge pointer dereference sign
+					return swaddr_read(eval(start + 1, end), 4);	// pointer dereference sign
 			}
  
 			uint32_t val1 = sign * eval(start, op - 1);	
 			int op_minus = op;
-			/* Deal minus number here
-			 */
 			sign = 1;
 			while (tokens[op_minus + 1].type == '-') {
 				sign *= -1;
 				op_minus ++;
 			}
 			uint32_t val2 = sign * eval(op_minus + 1, end);
-			// A minus number = sign * abs(number)
+			// 负数 = sign * abs(number)
  
 			switch(tokens[op].type) {
 				case '+': return val1 + val2; break;
