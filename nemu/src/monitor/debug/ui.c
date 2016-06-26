@@ -10,7 +10,10 @@
 
 void cpu_exec(uint32_t);
 
+uint32_t hwaddr_read(hwaddr_t,size_t);
+
 /* We use the ``readline'' library to provide more flexibility to read from stdin. */
+
 char* rl_gets() {
 	static char *line_read = NULL;
 
@@ -26,6 +29,16 @@ char* rl_gets() {
 	}
 
 	return line_read;
+}
+
+int chartoint(char *str){
+	int len = strlen(str);
+	int re = 0, m = 1, i;
+	for( i = len - 1; i >= 0; i--){
+		re = re + m * (str[i] - '0');
+		m = m * 10;
+	}
+	return re;
 }
 
 static int cmd_c(char *args) {
@@ -58,17 +71,16 @@ static int cmd_si(char *args) {
 static int cmd_info(char *args) {
 	int i;
 	if(strcmp(args, "r") == 0) {
-
 		for(i=0;i<8;i++){
 			printf("%s-%08x\n", regsl[i], reg_l(i));
 		}
 
 		for(i=0;i<8;i++){
-			printf("%s-%04x\n", regsw[j], reg_w(j));
+			printf("%s-%04x\n", regsw[i], reg_w(i));
 		}
 
 		for(i=0;i<8;i++){
-			printf("%s-%02x\n", regsb[k], reg_b(k));
+			printf("%s-%02x\n", regsb[i], reg_b(i));
 		}
 		printf("eip-%x\n", cpu.eip);		
 	}
@@ -85,7 +97,21 @@ static int cmd_info(char *args) {
 	return 0;
 }
 
-static int cmd_x(char *args);
+static int cmd_x(char *args)
+{
+	char *arg = strtok(NULL," ");
+	int n = chartoint(args);
+	arg = arg + strlen(arg) + 1;
+	int len = strlen(arg);
+	int i, m, re=0;
+	for(i = len - 1, m = 1; len >= 2; len--){
+		re = re + (arg[i] - '0') * m;
+		m = m << 4;
+	}
+	for(i = 0; i < n;i++)
+    		printf("0x%x\n", hwaddr_read(re + i, 4));
+	return 0;
+}
 
 
 static int cmd_p(char *args) {
@@ -131,7 +157,7 @@ static int cmd_d(char *args) {
 	return 0;
 }
 
-static int cmd_bt(char *args);
+//static int cmd_bt(char *args);
 
 static struct {
 	char *name;
@@ -147,7 +173,7 @@ static struct {
 	{ "x","Scan memory", cmd_x}, //扫描内存
 	{ "w","Add a watchpoint", cmd_w}, //设置监视 PA1-3
 	{ "d","Delete a watchpoint", cmd_d}, //删除监视 PA1-3
-	{ "bt","Print the stack", cmd_bt}, //打印栈帧链 PA2
+//	{ "bt","Print the stack", cmd_bt}, //打印栈帧链 PA2
 
 };
 
@@ -178,8 +204,6 @@ static int cmd_help(char *args) {
 
 void ui_mainloop() {
 	while(1) {
-		extern swaddr_t StackFrame[1000];
-		StackFrame[0] = 0;
 		char *str = rl_gets();
 		char *str_end = str + strlen(str);
 

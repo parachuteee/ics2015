@@ -81,3 +81,14 @@ void load_elf_tables(int argc, char *argv[]) {
 	fclose(fp);
 }
 
+
+uint32_t get_addr_obj(char* str) {
+	int i;
+	for (i = 0; i < nr_symtab_entry; ++ i) {
+		if (!strcmp((strtab + (symtab + i)->st_name), str)) {
+			return (uint32_t)(symtab + i)->st_value;
+		}
+	}
+	return 0;
+}
+
